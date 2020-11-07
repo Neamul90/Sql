@@ -1,0 +1,11 @@
+#In sql server SUBSTRING() is a function that extracts with a specified length starting from a location 
+
+```
+SUBSTRING(input_string, start, length);
+```
+
+In this syntax:
+
+input_string can be a character, binary, text, ntext, or image expression.
+start is an integer that specifies the location where the returned substring starts. Note that the first character in the input_string is 1, not zero.
+length is a positive integer that specifies the number of characters of the substring to be returned. The SUBSTRING() function raises an error if the length is negative. If start + length > the length of input_string, the substring will begin at the start and include the remaining characters of the input_string.
