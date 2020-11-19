@@ -1,0 +1,38 @@
+Return Year-Month-Day
+
+
+```
+USE [smartRecords_EME]
+GO
+/****** Object:  UserDefinedFunction [dbo].[FindDateDiff]    Script Date: 19-Nov-20 1:54:16 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER FUNCTION [dbo].[FindDateDiff](@Date1 date,@Date2 date)
+RETURNS TABLE 
+AS
+RETURN 
+(
+    SELECT
+        CALC.Years,CALC.Months,D.Days,
+        Result = RTRIM(Case When CALC.Years > 0 Then CONCAT(CALC.Years, 'y ') Else '0y ' End
+                     + Case When CALC.Months > 0 Then CONCAT(CALC.Months, 'm ') Else '0m ' End
+                     + Case When D.Days > 0 OR (CALC.Years=0 AND CALC.Months=0) Then CONCAT(D.Days, 'd') Else '0d ' End)
+    FROM (VALUES(IIF(@Date1<@Date2,@Date1,@Date2),IIF(@Date1<@Date2,@Date2,@Date1))) T(StartDate, EndDate)
+    CROSS APPLY(Select
+        TempEndYear = Case When ISDATE(CONCAT(YEAR(T.EndDate), FORMAT(T.StartDate,'-MM-dd')))=1 Then CONCAT(YEAR(T.EndDate), FORMAT(T.StartDate,'-MM-dd'))
+                        Else CONCAT(YEAR(T.EndDate),'-02-28') End
+    ) TEY
+    CROSS APPLY(Select EndYear = Case When TEY.TempEndYear > T.EndDate Then DATEADD(YEAR, -1, TEY.TempEndYear) Else TEY.TempEndYear End) EY
+    CROSS APPLY(Select
+        Years = DATEDIFF(YEAR,T.StartDate,EY.EndYear),
+        Months = DATEDIFF(MONTH,EY.EndYear,T.EndDate)-IIF(DAY(EY.EndYear)>DAY(T.EndDate),1,0)
+    ) CALC
+    CROSS APPLY(Select Days =  DATEDIFF(DAY,DATEADD(MONTH,CALC.Months,DATEADD(YEAR,CALC.Years,T.StartDate)),T.EndDate)) D
+)
+```
+```
+Select * From dbo.FindDateDiff('2018-12-14','2018-12-14')
+```
+
