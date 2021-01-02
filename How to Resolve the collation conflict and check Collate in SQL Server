@@ -1,0 +1,50 @@
+```
+begin
+	  
+
+		 create table #tempTable1
+		(
+	       ID INT IDENTITY(1, 1),amount float,iouid int,billid int,billby int,billdate date,dp_no varchar(100) COLLATE DATABASE_DEFAULT
+		) 
+	  
+	    insert into #tempTable1
+	    select a.amount ,a.iou_id,a.payment_id,dm1.paid_by_id,dm1.payment_date,dm1.payment_code
+		from  
+		tbl_ACC_data_DirectPaymentRegisterMultipleDetails a 
+		inner join tbl_ACC_data_DirectPaymentRegisterMultiple dm1 on a.payment_id=dm1.payment_id and a.tr_status=1
+		where 
+	--	a.iou_id=@iouid	and
+		 a.req_id=@reqid
+		 and a.tr_status=1
+
+
+		insert into #tempTable1
+		select b.bill_amount,b.iou_id ,b.bill_id,bd1.bill_by,bd1.bill_date,bd1.bill_no
+		from  tbl_ACC_data_bill_req_details b
+		inner join tbl_ACC_data_bill bd1 on bd1.bill_id=b.bill_id  and b.tr_status=1
+	    where
+		-- b.iou_id=@iouid and 
+		b.req_id=@reqid
+		and b.tr_status=1
+		select distinct
+		t.ID[SL No], t.dp_no[DP/Bill No],
+		       iou.iou_no[IOU No],
+		    --   dm.payment_code[DP Code No],
+		      -- bd.bill_no[Bill No],
+			   
+		convert(varchar,t.billdate,105)[DP/Bill Date],t.amount[Bill Amount],
+		t.billid,bd.form_type 
+		
+		from    #tempTable1 t
+	    left  join tbl_ACC_data_DirectPaymentRegisterMultiple dm on t.dp_no=dm.payment_code
+		left join tbl_ACC_data_bill bd  on t.dp_no=bd.bill_no
+		left join tbl_ACC_data_iou iou on t.iouid=iou.iou_id
+		left join tbl_hr_data_employee_info ei on ei.employee_id=t.billby
+		left join tbl_hr_setup_department  dpt on dpt.department_id=ei.employee_department_id
+		left join tbl_hr_setup_designation dsg on dsg.designation_id=ei.employee_designation_id
+		left join tbl_ACC_data_iou_req ioureq on ioureq.iou_id=iou.iou_id
+	    where ioureq.iou_req_id=@reqid
+        drop table #tempTable1
+	end
+
+```
