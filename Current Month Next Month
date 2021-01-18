@@ -1,0 +1,43 @@
+```
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE s20_monthlist 
+AS
+BEGIN
+	IF EXISTS(SELECT 1  FROM tbl_plan_setup_month WHERE plan_month_year = (SELECT CONCAT(LEFT(GETDATE(), 3), '''', FORMAT(GETDATE(), 'yy'))))
+BEGIN
+WITH monthlist AS 
+(
+    SELECT CONCAT(LEFT(DATEADD(m, DATEDIFF(m, -1, current_timestamp), 0), 3), '''', FORMAT(GETDATE(), 'yy')) AS month
+),
+
+cteVolume AS (
+      SELECT *, ROW_NUMBER() OVER(Partition by plan_month_year ORDER BY pmid) AS si FROM tbl_plan_setup_month
+    )
+SELECT plan_month_year AS month, pmid FROM cteVolume WHERE si <=1 
+UNION all
+SELECT month,20000000 AS pmid FROM monthlist 
+ORDER BY pmid
+
+END
+ELSE
+BEGIN
+WITH monthlist AS 
+(
+    SELECT CONCAT(LEFT(GETDATE(), 3), '''', FORMAT(GETDATE(), 'yy')) AS month
+    UNION all
+    SELECT CONCAT(LEFT(DATEADD(m, DATEDIFF(m, -1, current_timestamp), 0), 3), '''', FORMAT(GETDATE(), 'yy')) AS month
+),
+cteVolume AS(
+      SELECT *, ROW_NUMBER() OVER(Partition by plan_month_year ORDER BY pmid) AS si FROM tbl_plan_setup_month
+)
+SELECT plan_month_year AS month, pmid FROM cteVolume WHERE si <=1 
+UNION all
+SELECT month,20000000 AS pmid FROM monthlist 
+ORDER BY pmid
+END
+END
+GO
+```
