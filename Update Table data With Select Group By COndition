@@ -1,0 +1,8 @@
+
+UPDATE Per
+SET 
+Per.NoOfRoom=Addr.NoRoom
+FROM RoomTypes Per
+INNER JOIN
+(Select Count(*) as NoRoom, RoomTypeId from Rooms group by RoomTypeId) as Addr
+ON Per.RoomTypeId = Addr.RoomTypeId
